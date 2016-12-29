@@ -1,0 +1,153 @@
+<html>
+    <head><link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/milligram/1.2.3/milligram.min.css"></head>
+  <body class="container" style="padding-top: 3%;">
+    <h2><a href="index.html">off-chain</a></h2>
+    <h4>TicTacToe</h4>
+    <hr />
+
+    <div id="startGameContainer">
+      <h5>Start Game</h5>
+      <div class="row">
+        <div class="column">
+          <label>Player 1</label>
+          <input id="player1" type="text" name="player1"><br>
+        </div>
+        <div class="column">
+          <label>Player 2</label>
+          <input id="player2" type="text" name="player2"><br>
+        </div>
+      </div>
+      <button id="startGame">Start Game</button>
+    </div>
+
+    <div id="gameContainer" style="display: none;">
+      <h5>Make Move</h5>
+      <div class="row">
+        <div class="column">
+          <label>Player Address<label>
+          <span id="player">loading...</span>
+        </div>
+        <div class="column">
+          <label>Turn<label>
+          player <span id="turn"></span>
+        </div>
+        <div class="column">
+          <label>Winner<label>
+          <span id="won">none</span>
+        </div>
+      </div>
+      <hr />
+
+      <div style="width: 300px;">
+        <div data-row="0" class="row" style="height: 100px; background: #F1F1F1;">
+          <div id="b00" data-col="0" class="block column column-33" style="border-right: 2px solid #aaa"></div>
+          <div id="b01" data-col="1" class="block column column-33" style="border-right: 2px solid #aaa"></div>
+          <div id="b02" data-col="2" class="block column column-33"></div>
+        </div>
+        <div data-row="1" class="row" style="border-top: 2px solid #aaa; height: 100px; background: #F1F1F1;">
+          <div id="b10" data-col="0" class="block column column-33" style="border-right: 2px solid #aaa"></div>
+          <div id="b11" data-col="1" class="block column column-33" style="border-right: 2px solid #aaa"></div>
+          <div id="b12" data-col="2" class="block column column-33"></div>
+        </div>
+        <div data-row="2" class="row" style="border-top: 2px solid #aaa; height: 100px; background: #F1F1F1;">
+          <div id="b20" data-col="0" class="block column column-33" style="border-right: 2px solid #aaa"></div>
+          <div id="b21" data-col="1" class="block column column-33" style="border-right: 2px solid #aaa"></div>
+          <div id="b22" data-col="2" class="block column column-33"></div>
+        </div>
+      </div>
+    </div>
+    
+    <div id="response"></div>
+    <script type="text/javascript" src="js-sha256.js"></script>
+    <script type="text/javascript" src="TicTacToeJS.js"></script>
+    <script type="text/javascript">
+      var el = function(id){ return document.querySelector(id); };
+      let gameInstance;
+      let renderInterval;
+      let playerWon, p1color = '#F22738', p2color = '#000';
+
+      function renderBlock(row, column) {
+        let player = gameInstance.board(row,column);
+        var block = el('#b' + String(row) + '' + String(column));
+        if (player == 1) {
+            block.style.background = p1color;
+        }
+
+        if (player == 2) {
+            block.style.background = p2color;
+        }
+      }
+
+      function render() {
+        for(var row = 0; row < 3; row ++) {
+          for (var column = 0; column < 3; column ++) {
+            renderBlock(row, column);
+          }
+        }
+
+        let turnNumber = gameInstance.turn();
+        el('#turn').innerHTML = turnNumber;
+        let playerAddress = gameInstance.addressOf(turnNumber);
+        el('#player').innerHTML = playerAddress;
+        let player1HasWon = gameInstance.hasWon(1);
+        let player2HasWon = gameInstance.hasWon(2);
+        if (player1HasWon) { playerWon = '1'; }
+        if (player2HasWon) { playerWon = '2'; }
+        if (playerWon) {
+            el('#won').innerHTML = 'player ' + String(playerWon) + '!!';
+        }
+      }
+
+      function startGame() {
+        el('#startGameContainer').style.display = 'none';
+        el('#gameContainer').style.display = 'block';
+        document.querySelectorAll('.block').forEach(function(blockEl){
+          blockEl.addEventListener('click', function(block) {
+            var row = block.target.parentNode.dataset.row;
+            var col = block.target.dataset.col;
+
+            if (playerWon) { return; }
+
+            el('#response').innerHTML = 'processing move...';
+            let turnNumber = gameInstance.turn();
+            let playerAddress = gameInstance.addressOf(turnNumber);
+            let txHash = gameInstance.move(row, col, playerAddress);
+            el('#response').innerHTML = 'making move with tx hash: ' + String(txHash);
+
+          });
+        });
+        renderInterval = setInterval(render, 3000);
+        render();
+      }
+
+      window.addEventListener('load', function() {
+          if (typeof web3 !== 'undefined') {
+              web3 = new Web3(web3.currentProvider);
+              document.querySelectorAll('.addressSelector').forEach(function(selector) {
+                 console.log(' web3.eth.accounts',  web3.eth.accounts)
+                  web3.eth.accounts.forEach(function(account){
+                      selector.innerHTML += '<option value="' + account + '">' + account + '</option>';
+                  })
+              })
+              el('#startGame').addEventListener('click', function(){
+                if (el('#player1').value == el('#player2').value) {
+                    return el('#response').innerHTML = 'The player addresses cannot be the same!';
+                }
+                let config = {};
+                config.observer = window.location.href;
+                config.player1 = el('#player1').value;
+                config.player2 = el('#player2').value;
+                config.source_code = "IPFS_address";
+                config.smart_contract = "smart_contract_address";
+                el('#config').innerHTML = JSON.stringify(config);
+                // TODO : save config to blockchain
+                // TODO : listen for event from smart contract to begin game 
+                gameInstance = new TicTacToeJS(el('#player1').value, el('#player2').value);
+                startGame(); // TODO : this should be called when smart contract throws start event
+              })
+          }
+      })      
+    </script>
+    <pre><code id="config"></code></pre>
+    </body>
+</html>

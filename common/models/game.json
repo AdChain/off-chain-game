@@ -1,0 +1,33 @@
+{
+  "name": "game",
+  "plural": "games",
+  "base": "PersistedModel",
+  "idInjection": true,
+  "options": {
+    "validateUpsert": true
+  },
+  "properties": {
+    "id": {
+      "type": "number"
+    },
+    "observer": {
+      "type": "string"
+    },
+    "player1": {
+      "type": "string"
+    },
+    "player2": {
+      "type": "string"
+    },
+    "source_code": {
+      "type": "string"
+    },
+    "smart_contract": {
+      "type": "string"
+    }
+  },
+  "validations": [],
+  "relations": {},
+  "acls": [],
+  "methods": {}
+}
