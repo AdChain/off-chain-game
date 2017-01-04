@@ -58,17 +58,34 @@
     </div>
     
     <div id="response"></div>
+    <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
     <script type="text/javascript" src="js-sha256.js"></script>
-    <script type="text/javascript" src="TicTacToeJS.js"></script>
+    <script type="text/javascript" src="http://0.0.0.0:3000/TicTacToeJS.js"></script>
     <script type="text/javascript">
-      var el = function(id){ return document.querySelector(id); };
+      let socket = io();
+      let el = function(id){ return document.querySelector(id); };
+      let player1, player2, tx_log = [];
       let gameInstance;
       let renderInterval;
       let playerWon, p1color = '#F22738', p2color = '#000';
 
+
+      // get SHA-256 of app logic
+      function getSource () {
+        tx_log.push(sha256(this.responseText));
+      }
+
+      let request = new XMLHttpRequest();
+      request.addEventListener("load", getSource);
+      request.open('GET', window.location.href);
+      request.send();
+
+
+
       function renderBlock(row, column) {
         let player = gameInstance.board(row,column);
-        var block = el('#b' + String(row) + '' + String(column));
+        let block = el('#b' + String(row) + '' + String(column));
+
         if (player == 1) {
             block.style.background = p1color;
         }
@@ -84,8 +101,7 @@
             renderBlock(row, column);
           }
         }
-
-        let turnNumber = gameInstance.turn();
+        let turnNumber = gameInstance.turn()
         el('#turn').innerHTML = turnNumber;
         let playerAddress = gameInstance.addressOf(turnNumber);
         el('#player').innerHTML = playerAddress;
@@ -108,44 +124,81 @@
 
             if (playerWon) { return; }
 
-            el('#response').innerHTML = 'processing move...';
             let turnNumber = gameInstance.turn();
-            let playerAddress = gameInstance.addressOf(turnNumber);
-            let txHash = gameInstance.move(row, col, playerAddress);
-            el('#response').innerHTML = 'making move with tx hash: ' + String(txHash);
+            playerAddress = gameInstance.addressOf(turnNumber);
 
+            if (address == gameInstance.addressOf(turnNumber)) {
+              let hash = sha256(gameInstance.move(row, col, playerAddress))
+              let obj = {
+                player:playerAddress,
+                row:row,
+                col:col, 
+                hash: hash
+              }
+              socket.emit('tx', obj);
+            } else {
+              el('#response').innerHTML = 'not your turn';
+            }
           });
         });
         renderInterval = setInterval(render, 3000);
         render();
       }
 
-      window.addEventListener('load', function() {
-          if (typeof web3 !== 'undefined') {
-              web3 = new Web3(web3.currentProvider);
-              document.querySelectorAll('.addressSelector').forEach(function(selector) {
-                 console.log(' web3.eth.accounts',  web3.eth.accounts)
-                  web3.eth.accounts.forEach(function(account){
-                      selector.innerHTML += '<option value="' + account + '">' + account + '</option>';
-                  })
-              })
-              el('#startGame').addEventListener('click', function(){
-                if (el('#player1').value == el('#player2').value) {
-                    return el('#response').innerHTML = 'The player addresses cannot be the same!';
-                }
-                let config = {};
-                config.observer = window.location.href;
-                config.player1 = el('#player1').value;
-                config.player2 = el('#player2').value;
-                config.source_code = "IPFS_address";
-                config.smart_contract = "smart_contract_address";
-                el('#config').innerHTML = JSON.stringify(config);
-                // TODO : save config to blockchain
-                // TODO : listen for event from smart contract to begin game 
-                gameInstance = new TicTacToeJS(el('#player1').value, el('#player2').value);
-                startGame(); // TODO : this should be called when smart contract throws start event
-              })
+      socket.on('tx', tx=> {
+        let lastTx = tx.pop()
+        if (lastTx.player != address) {
+          /*
+            1. validate transaction from other player
+            - if not valid, communicate with observer
+            - if valid, process move
+          */
+          let move = gameInstance.move(lastTx.row, lastTx.col, lastTx.player);
+          let board = sha256(move)
+          if (board == lastTx.hash) {
+            console.log('move verified')
+          } else {
+            console.log('NOT VERIFIED, need to call observer')
+            // TODO : CALL THE OBSERVER
           }
+        }
+        el('#response').innerHTML = 'making move with tx hash: ' + sha256(tx);
+      })
+
+      socket.on('player_loaded', msg => {
+        if (msg.player2.length == 0) {
+          player1 = address
+        }
+        if (msg.player2.length > 0 && player1 == undefined) {
+          address = player2 = msg.player2
+        }
+        el('#player1').value = msg.player1
+        el('#player2').value = msg.player2
+      });
+
+      window.addEventListener('load', function() {
+        if (typeof web3 !== 'undefined') {
+          // web3 = new Web3(web3.currentProvider);
+          address = web3.eth.accounts[0]
+          socket.emit('player_loaded', address);
+          el('#startGame').addEventListener('click', function(){
+            if (el('#player1').value == el('#player2').value) {
+                return el('#response').innerHTML = 'The player addresses cannot be the same!';
+            }
+
+            let config = {};
+            config.observer = window.location.href;
+            config.player1 = el('#player1').value;
+            config.player2 = el('#player2').value;
+            config.source_code = "IPFS_address";
+            config.smart_contract = "smart_contract_address";
+            el('#config').innerHTML = JSON.stringify(config);
+            // TODO : save config to blockchain
+            // TODO : listen for event from smart contract to begin gameInstance
+            gameInstance = new TicTacToeJS(el('#player1').value, el('#player2').value);
+            startGame(); // TODO : this should be called when smart contract throws start event
+          })
+        }
       })      
     </script>
     <pre><code id="config"></code></pre>

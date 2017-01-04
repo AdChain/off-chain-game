@@ -24,6 +24,9 @@
     },
     "smart_contract": {
       "type": "string"
+    },
+    "tx_log": {
+      "type": "array"
     }
   },
   "validations": [],

@@ -67,8 +67,7 @@ class TicTacToeJS {
             this._turn = 1;
         }
         // TODO : provide txhash of move
-        // return this._addressOf[_player];
-        return this._board.toString()
+        return this._addressOf[_player];
     }
 }
 
