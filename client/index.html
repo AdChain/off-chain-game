@@ -128,12 +128,13 @@
             playerAddress = gameInstance.addressOf(turnNumber);
 
             if (address == gameInstance.addressOf(turnNumber)) {
-              let hash = sha256(gameInstance.move(row, col, playerAddress))
+              let move = sha256(gameInstance.move(row, col, playerAddress))
+              tx_log.push(move)
               let obj = {
                 player:playerAddress,
                 row:row,
                 col:col, 
-                hash: hash
+                hash: sha256(tx_log.toString())
               }
               socket.emit('tx', obj);
             } else {
@@ -148,14 +149,10 @@
       socket.on('tx', tx=> {
         let lastTx = tx.pop()
         if (lastTx.player != address) {
-          /*
-            1. validate transaction from other player
-            - if not valid, communicate with observer
-            - if valid, process move
-          */
-          let move = gameInstance.move(lastTx.row, lastTx.col, lastTx.player);
-          let board = sha256(move)
-          if (board == lastTx.hash) {
+          let move = sha256(gameInstance.move(lastTx.row, lastTx.col, lastTx.player));
+          tx_log.push(move)
+          let verification = sha256(tx_log.toString())
+          if (verification == lastTx.hash) {
             console.log('move verified')
           } else {
             console.log('NOT VERIFIED, need to call observer')
