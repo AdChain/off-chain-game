@@ -21,6 +21,7 @@
     </div>
 
     <div id="gameContainer" style="display: none;">
+      <button id="randomTx">Create random tx hash</button>
       <h5>Make Move</h5>
       <div class="row">
         <div class="column">
@@ -37,6 +38,8 @@
         </div>
       </div>
       <hr />
+
+      
 
       <div style="width: 300px;">
         <div data-row="0" class="row" style="height: 100px; background: #F1F1F1;">
@@ -73,14 +76,13 @@
       // get SHA-256 of app logic
       function getSource () {
         tx_log.push(sha256(this.responseText));
+        console.log('tx_log, source', tx_log)
       }
 
       let request = new XMLHttpRequest();
       request.addEventListener("load", getSource);
       request.open('GET', window.location.href);
       request.send();
-
-
 
       function renderBlock(row, column) {
         let player = gameInstance.board(row,column);
@@ -146,8 +148,12 @@
         render();
       }
 
-      socket.on('tx', tx=> {
-        let lastTx = tx.pop()
+      socket.on('verify', msg => {
+        console.log('cheater is', msg)
+      })
+
+      socket.on('tx', msg => {
+        let lastTx = msg.pop()
         if (lastTx.player != address) {
           let move = sha256(gameInstance.move(lastTx.row, lastTx.col, lastTx.player));
           tx_log.push(move)
@@ -157,9 +163,10 @@
           } else {
             console.log('NOT VERIFIED, need to call observer')
             // TODO : CALL THE OBSERVER
+            socket.emit('verify', address);
           }
         }
-        el('#response').innerHTML = 'making move with tx hash: ' + sha256(tx);
+        el('#response').innerHTML = 'making move with tx hash: ' + sha256(msg);
       })
 
       socket.on('player_loaded', msg => {
@@ -178,7 +185,7 @@
           // web3 = new Web3(web3.currentProvider);
           address = web3.eth.accounts[0]
           socket.emit('player_loaded', address);
-          el('#startGame').addEventListener('click', function(){
+          el('#startGame').addEventListener('click', () => {
             if (el('#player1').value == el('#player2').value) {
                 return el('#response').innerHTML = 'The player addresses cannot be the same!';
             }
@@ -194,6 +201,20 @@
             // TODO : listen for event from smart contract to begin gameInstance
             gameInstance = new TicTacToeJS(el('#player1').value, el('#player2').value);
             startGame(); // TODO : this should be called when smart contract throws start event
+          })
+          el('#randomTx').addEventListener('click', () => {
+            let turnNumber = gameInstance.turn();
+            if (address == gameInstance.addressOf(turnNumber)) {
+              //socket.emit('tx', Math.random());
+              tx_log.push(Math.random())
+              let obj = {
+                player:address,
+                row:2,
+                col:2, 
+                hash: sha256(tx_log.toString())
+              }
+              socket.emit('tx', obj);
+            }
           })
         }
       })      
