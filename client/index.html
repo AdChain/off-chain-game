@@ -39,8 +39,6 @@
       </div>
       <hr />
 
-      
-
       <div style="width: 300px;">
         <div data-row="0" class="row" style="height: 100px; background: #F1F1F1;">
           <div id="b00" data-col="0" class="block column column-33" style="border-right: 2px solid #aaa"></div>
@@ -59,75 +57,76 @@
         </div>
       </div>
     </div>
-    
+
     <div id="response"></div>
     <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
     <script type="text/javascript" src="js-sha256.js"></script>
     <script type="text/javascript" src="http://0.0.0.0:3000/TicTacToeJS.js"></script>
     <script type="text/javascript">
-      let socket = io();
-      let el = function(id){ return document.querySelector(id); };
-      let player1, player2, tx_log = [];
-      let gameInstance;
-      let renderInterval;
-      let playerWon, p1color = '#F22738', p2color = '#000';
-
+      let socket = io()
+      let el = function(id){ return document.querySelector(id) }
+      let player1, player2, tx_log = []
+      let gameInstance
+      let renderInterval
+      let playerWon, p1color = '#F22738', p2color = '#000'
 
       // get SHA-256 of app logic
       function getSource () {
-        tx_log.push(sha256(this.responseText));
-        console.log('tx_log, source', tx_log)
+        tx_log.push(sha256(this.responseText))
       }
 
       let request = new XMLHttpRequest();
-      request.addEventListener("load", getSource);
-      request.open('GET', window.location.href);
-      request.send();
+      request.addEventListener("load", getSource)
+      request.open('GET', window.location.href)
+      request.send()
 
       function renderBlock(row, column) {
         let player = gameInstance.board(row,column);
-        let block = el('#b' + String(row) + '' + String(column));
+        let block = el('#b' + String(row) + '' + String(column))
 
         if (player == 1) {
-            block.style.background = p1color;
+            block.style.background = p1color
         }
 
         if (player == 2) {
-            block.style.background = p2color;
+            block.style.background = p2color
         }
       }
 
       function render() {
         for(var row = 0; row < 3; row ++) {
           for (var column = 0; column < 3; column ++) {
-            renderBlock(row, column);
+            renderBlock(row, column)
           }
         }
         let turnNumber = gameInstance.turn()
-        el('#turn').innerHTML = turnNumber;
-        let playerAddress = gameInstance.addressOf(turnNumber);
-        el('#player').innerHTML = playerAddress;
-        let player1HasWon = gameInstance.hasWon(1);
-        let player2HasWon = gameInstance.hasWon(2);
+        el('#turn').innerHTML = turnNumber
+        let playerAddress = gameInstance.addressOf(turnNumber)
+        el('#player').innerHTML = playerAddress
+        let player1HasWon = gameInstance.hasWon(1)
+        let player2HasWon = gameInstance.hasWon(2)
         if (player1HasWon) { playerWon = '1'; }
         if (player2HasWon) { playerWon = '2'; }
         if (playerWon) {
-            el('#won').innerHTML = 'player ' + String(playerWon) + '!!';
+            el('#won').innerHTML = 'player ' + String(playerWon) + '!!'
+            socket.emit('close', playerWon)
+            clearInterval(renderInterval)
         }
       }
 
-      function startGame() {
+      function startGame(config) {
+        socket.on('start', config)
         el('#startGameContainer').style.display = 'none';
         el('#gameContainer').style.display = 'block';
         document.querySelectorAll('.block').forEach(function(blockEl){
           blockEl.addEventListener('click', function(block) {
-            var row = block.target.parentNode.dataset.row;
-            var col = block.target.dataset.col;
+            var row = block.target.parentNode.dataset.row
+            var col = block.target.dataset.col
 
             if (playerWon) { return; }
 
             let turnNumber = gameInstance.turn();
-            playerAddress = gameInstance.addressOf(turnNumber);
+            playerAddress = gameInstance.addressOf(turnNumber)
 
             if (address == gameInstance.addressOf(turnNumber)) {
               let move = sha256(gameInstance.move(row, col, playerAddress))
@@ -138,14 +137,14 @@
                 col:col, 
                 hash: sha256(tx_log.toString())
               }
-              socket.emit('tx', obj);
+              socket.emit('tx', obj)
             } else {
-              el('#response').innerHTML = 'not your turn';
+              el('#response').innerHTML = 'not your turn'
             }
-          });
-        });
-        renderInterval = setInterval(render, 3000);
-        render();
+          })
+        })
+        renderInterval = setInterval(render, 3000)
+        render()
       }
 
       socket.on('verify', msg => {
@@ -159,14 +158,13 @@
           tx_log.push(move)
           let verification = sha256(tx_log.toString())
           if (verification == lastTx.hash) {
-            console.log('move verified')
+            console.log('move VERIFIED')
           } else {
-            console.log('NOT VERIFIED, need to call observer')
-            // TODO : CALL THE OBSERVER
-            socket.emit('verify', address);
+            console.log('NOT VERIFIED, calling the observer')
+            socket.emit('verify', address)
           }
         }
-        el('#response').innerHTML = 'making move with tx hash: ' + sha256(msg);
+        el('#response').innerHTML = 'making move with tx hash: ' + sha256(msg)
       })
 
       socket.on('player_loaded', msg => {
@@ -178,7 +176,7 @@
         }
         el('#player1').value = msg.player1
         el('#player2').value = msg.player2
-      });
+      })
 
       window.addEventListener('load', function() {
         if (typeof web3 !== 'undefined') {
@@ -187,20 +185,20 @@
           socket.emit('player_loaded', address);
           el('#startGame').addEventListener('click', () => {
             if (el('#player1').value == el('#player2').value) {
-                return el('#response').innerHTML = 'The player addresses cannot be the same!';
+              return el('#response').innerHTML = 'The player addresses cannot be the same!'
             }
-
-            let config = {};
-            config.observer = window.location.href;
-            config.player1 = el('#player1').value;
-            config.player2 = el('#player2').value;
-            config.source_code = "IPFS_address";
-            config.smart_contract = "smart_contract_address";
-            el('#config').innerHTML = JSON.stringify(config);
-            // TODO : save config to blockchain
-            // TODO : listen for event from smart contract to begin gameInstance
-            gameInstance = new TicTacToeJS(el('#player1').value, el('#player2').value);
-            startGame(); // TODO : this should be called when smart contract throws start event
+            if (el('#player2').value == "") {
+              return el('#response').innerHTML = 'Still waiting for opponent'
+            }
+            let config = {}
+            config.observer = window.location.href
+            config.player1 = el('#player1').value
+            config.player2 = el('#player2').value
+            config.source_code = window.location.href
+            el('#config').innerHTML = JSON.stringify(config)
+            gameInstance = new TicTacToeJS(el('#player1').value, el('#player2').value)
+            socket.emit('start', config)
+            startGame(config);
           })
           el('#randomTx').addEventListener('click', () => {
             let turnNumber = gameInstance.turn();
@@ -213,7 +211,7 @@
                 col:2, 
                 hash: sha256(tx_log.toString())
               }
-              socket.emit('tx', obj);
+              socket.emit('tx', obj)
             }
           })
         }
