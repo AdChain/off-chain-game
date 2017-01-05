@@ -54,7 +54,7 @@ boot(app, __dirname, function(err) {
     app.io = require('socket.io')(app.start())
 
     let fs = require('fs')
-    fs.readFile(`${__dirname}/../client/index.html`, 'utf8', (err,data) => {
+    fs.readFile(`${__dirname}/../client/TicTacToeJS.js`, 'utf8', (err,data) => {
       if (err) {
         return console.log(err)
       }

@@ -77,7 +77,7 @@
 
       let request = new XMLHttpRequest();
       request.addEventListener("load", getSource)
-      request.open('GET', window.location.href)
+      request.open('GET', `${window.location.href}TicTacToeJS.js`)
       request.send()
 
       function renderBlock(row, column) {
