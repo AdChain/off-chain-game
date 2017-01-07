@@ -75,6 +75,13 @@
         tx_log.push(sha256(this.responseText))
       }
 
+      socket.on('players', msg => {
+        player1 = msg[0].player1;
+        player2 = msg[1].player2;
+        console.log('player1', player1)
+        console.log('player2', player2)
+      })
+
       let request = new XMLHttpRequest();
       request.addEventListener("load", getSource)
       request.open('GET', `${window.location.href}TicTacToeJS.js`)
@@ -105,8 +112,14 @@
         el('#player').innerHTML = playerAddress
         let player1HasWon = gameInstance.hasWon(1)
         let player2HasWon = gameInstance.hasWon(2)
-        if (player1HasWon) { playerWon = '1'; }
-        if (player2HasWon) { playerWon = '2'; }
+        if (player1HasWon) { 
+          playerWon = '1'; 
+          console.log('player1 Won!', player1)
+        }
+        if (player2HasWon) { 
+          playerWon = '2'; 
+          console.log('player2 Won!', player2)
+        }
         if (playerWon) {
             el('#won').innerHTML = 'player ' + String(playerWon) + '!!'
             socket.emit('close', playerWon)

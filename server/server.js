@@ -73,8 +73,18 @@ boot(app, __dirname, function(err) {
           hash.push(move);
           let verification = sha256(hash.toString())
           let cheater = ""
+          let winner = ""
           if (verification != itm.hash) {
             app.io.emit('verify', itm.player)
+            if(itm.player == players.player1) {
+              winner = players.player2
+            } else {
+              winner = players.player1
+            }
+            console.log('close smart contract')
+            contractInstance.close(winner).then(result => {
+              
+            })
           }
         })
       })
@@ -83,6 +93,7 @@ boot(app, __dirname, function(err) {
         // console.log('start, msg', msg)
         checkin.push(msg)
         if (checkin.length == 2) {
+          app.io.emit('players',checkin)
           if (checkin[0] != checkin[1]) {
             console.log('initiate smart contract')
             // smart contract START
@@ -108,7 +119,7 @@ boot(app, __dirname, function(err) {
         if (checkin.length == 0) {
           console.log('close smart contract')
           contractInstance.close(msg).then(result => {
-            console.log('winner winner, chicken dinner', result)
+            
           })
         }
         
@@ -117,8 +128,10 @@ boot(app, __dirname, function(err) {
       socket.on('player_loaded', msg => { 
           if (players.player1 == "") {
             players.player1 = msg
+            console.log('player1', players.player1)
           } else {
             players.player2 = msg+"2"
+            console.log('player2', players.player2)
             gameInstance = new ttt(players.player1, players.player2);
             
           }
