@@ -12,9 +12,5 @@
       "../common/mixins",
       "./mixins"
     ]
-  },
-  "game": {
-    "dataSource": "mem",
-    "public": true
   }
 }
