@@ -20,5 +20,9 @@
   "Game": {
     "dataSource": null,
     "public": true
+  },
+  "Contract": {
+    "dataSource": "ethereum",
+    "public": true
   }
 }

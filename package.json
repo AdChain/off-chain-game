@@ -18,6 +18,7 @@
     "loopback": "^2.22.0",
     "loopback-boot": "^2.6.5",
     "loopback-component-explorer": "^2.4.0",
+    "loopback-connector-web3": "github:adchain/loopback-connector-web3",
     "loopback-datasource-juggler": "^2.39.0",
     "npm": "^4.0.5",
     "serve-favicon": "^2.0.1",
