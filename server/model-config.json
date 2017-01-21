@@ -12,5 +12,13 @@
       "../common/mixins",
       "./mixins"
     ]
+  },
+  "Transaction": {
+    "dataSource": "mem",
+    "public": true
+  },
+  "Game": {
+    "dataSource": null,
+    "public": true
   }
 }
