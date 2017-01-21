@@ -25,7 +25,7 @@ module.exports = function(Transaction) {
     const Game = Transaction.app.models.Game;
 
     let hash = [Game.sourceHash];
-    let gameInstance = new TicTacToe(Game.players.player1, Game.players.player2);
+    let gameInstance = new TicTacToe(Game.player1, Game.player2);
 
     Transaction.find((err, tx) => {
       for (const itm of tx) {
@@ -51,10 +51,10 @@ module.exports = function(Transaction) {
           Transaction.app.io.emit('verify', itm.player);
 
           let winner;
-          if (itm.player == Game.players.player1) {
-            winner = Game.players.player2;
+          if (itm.player == Game.player1) {
+            winner = Game.player2;
           } else {
-            winner = Game.players.player1;
+            winner = Game.player1;
           }
 
           Game.closeContract(winner, cb);

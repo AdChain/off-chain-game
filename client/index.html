@@ -10,11 +10,11 @@
       <div class="row">
         <div class="column">
           <label>Player 1</label>
-          <input id="player1" type="text" name="player1"><br>
+          <div id="player1">pending...</div>
         </div>
         <div class="column">
           <label>Player 2</label>
-          <input id="player2" type="text" name="player2"><br>
+          <div id="player2">pending...</div>
         </div>
       </div>
       <button id="startGame">Start Game</button>
@@ -61,7 +61,8 @@
     <div id="response"></div>
     <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
     <script type="text/javascript" src="js-sha256.js"></script>
-    <script type="text/javascript" src="http://0.0.0.0:3000/TicTacToeJS.js"></script>
+    <script type="text/javascript" src="TicTacToeJS.js"></script>
+    <script type="text/javascript" src="observerClient.js"></script>
     <script type="text/javascript">
       let socket = io()
       let el = function(id){ return document.querySelector(id) }
@@ -76,10 +77,10 @@
       }
 
       socket.on('players', msg => {
-        player1 = msg[0].player1;
-        player2 = msg[1].player2;
-        console.log('player1', player1)
-        console.log('player2', player2)
+        player1 = msg[0];
+        player2 = msg[1];
+        el('#player1').innerHTML = player1 || 'pending...'
+        el('#player2').innerHTML = player2 || 'pending...'
       })
 
       let request = new XMLHttpRequest();
@@ -122,13 +123,13 @@
         }
         if (playerWon) {
             el('#won').innerHTML = 'player ' + String(playerWon) + '!!'
-            socket.emit('close', playerWon)
+            closeGame(playerWon)
             clearInterval(renderInterval)
         }
       }
 
-      function startGame(config) {
-        socket.on('start', config)
+      function startGame() {
+        gameInstance = new TicTacToeJS(player1, player2)
         el('#startGameContainer').style.display = 'none';
         el('#gameContainer').style.display = 'block';
         document.querySelectorAll('.block').forEach(function(blockEl){
@@ -150,7 +151,7 @@
                 col:col, 
                 hash: sha256(tx_log.toString())
               }
-              socket.emit('tx', obj)
+              sendTransaction(obj)
             } else {
               el('#response').innerHTML = 'not your turn'
             }
@@ -164,55 +165,34 @@
         console.log('cheater is', msg)
       })
 
-      socket.on('tx', msg => {
-        let lastTx = msg.pop()
-        if (lastTx.player != address) {
-          let move = sha256(gameInstance.move(lastTx.row, lastTx.col, lastTx.player));
+      socket.on('start', () => {
+        startGame()
+      })
+
+      socket.on('tx', tx => {
+        if (tx.player != address) {
+          let move = sha256(gameInstance.move(tx.row, tx.col, tx.player));
           tx_log.push(move)
           let verification = sha256(tx_log.toString())
-          if (verification == lastTx.hash) {
+          if (verification == tx.hash) {
             console.log('move VERIFIED')
           } else {
             console.log('NOT VERIFIED, calling the observer')
-            socket.emit('verify', address)
+            verify(address)
           }
         }
-        el('#response').innerHTML = 'making move with tx hash: ' + sha256(msg)
-      })
-
-      socket.on('player_loaded', msg => {
-        if (msg.player2.length == 0) {
-          player1 = address
-        }
-        if (msg.player2.length > 0 && player1 == undefined) {
-          address = player2 = msg.player2
-        }
-        el('#player1').value = msg.player1
-        el('#player2').value = msg.player2
+        el('#response').innerHTML = 'making move with tx hash: ' + sha256(tx.hash)
       })
 
       window.addEventListener('load', function() {
         if (typeof web3 !== 'undefined') {
           // web3 = new Web3(web3.currentProvider);
           address = web3.eth.accounts[0]
-          socket.emit('player_loaded', address);
           el('#startGame').addEventListener('click', () => {
-            if (el('#player1').value == el('#player2').value) {
-              return el('#response').innerHTML = 'The player addresses cannot be the same!'
-            }
-            if (el('#player2').value == "") {
-              return el('#response').innerHTML = 'Still waiting for opponent'
-            }
-            let config = {}
-            config.observer = window.location.href
-            config.player1 = el('#player1').value
-            config.player2 = el('#player2').value
-            config.source_code = window.location.href
-            el('#config').innerHTML = JSON.stringify(config)
-            gameInstance = new TicTacToeJS(el('#player1').value, el('#player2').value)
-            socket.emit('start', config)
-            startGame(config);
+            joinGame(address)
+            el('#startGame').disabled = true;
           })
+
           el('#randomTx').addEventListener('click', () => {
             let turnNumber = gameInstance.turn();
             if (address == gameInstance.addressOf(turnNumber)) {
@@ -224,12 +204,11 @@
                 col:2, 
                 hash: sha256(tx_log.toString())
               }
-              socket.emit('tx', obj)
+              sendTransaction(obj)
             }
           })
         }
       })      
     </script>
-    <pre><code id="config"></code></pre>
     </body>
 </html>

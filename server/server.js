@@ -19,6 +19,17 @@ app.start = function() {
   });
 
   app.io = socketio(server);
+  app.io.on('connection', function(socket) {
+    console.log('client connected', socket.id);
+
+    if (app.models.Game.checkin.length > 0) {
+      socket.emit('players', app.models.Game.checkin);
+    }
+
+    socket.on('disconnect', function() {
+      console.log('client disconnected', socket.id);
+    });
+  });
   return server;
 };
 
