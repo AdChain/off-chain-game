@@ -1,8 +1,10 @@
 {
   "mem": {
     "name": "mem",
-    "localStorage": "",
-    "file": "",
     "connector": "memory"
+  },
+  "ethereum": {
+    "name": "ethereum",
+    "connector": "web3"
   }
 }

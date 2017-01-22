@@ -1,0 +1,22 @@
+{
+  "name": "Contract",
+  "plural": "contracts",
+  "base": "Model",
+  "idInjection": true,
+  "options": {
+    "validateUpsert": true
+  },
+  "properties": {},
+  "validations": [],
+  "relations": {},
+  "acls": [],
+  "methods": {},
+  "ethereum":{
+    "contract":{
+      "sol": "server/Verify.sol",
+      "name":"Verify"
+    },
+    "gas": 3000000,
+    "url": "http://localhost:8545"
+  }
+}

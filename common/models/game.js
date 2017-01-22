@@ -1,50 +1,91 @@
 'use strict';
 
+const sha256 = require('js-sha256');
+const fs = require('fs');
+
 module.exports = function(Game) {
-    Game.request = function(address, cb) {
-      this.find(null, (err,data) => {
-          if (data.length == 0) { // start new game
-            this.create({player1: address}, err, data => {
-                this.find(null, (err, data) => {
-                    cb(null, data)
-                })
-            })
-          } 
-          else { // player waiting to start game
-            let game = data[0];
-            game.player2 = address;
-            this.upsert(game, (err, data) => {
-                cb(null, data)
-            })
-          }
-      })
+  Game.checkin = [];
+  Game.player1 = null;
+  Game.player2 = null;
+  Game.instance = null;
+
+  let contractInstance;
+
+  fs.readFile('client/TicTacToeJS.js', 'utf8', (err, data) => {
+    if (err) {
+      return console.log(err);
+    }
+    Game.sourceHash = sha256(data);
+  });
+
+  Game.start = function(playerAddr, cb) {
+    if (Game.checkin.length >= 2) {
+      return cb('two players have already joined');
     }
 
-    Game.remoteMethod('request', {
-        accepts: {arg: 'address', type: 'string'},
-        returns: {arg: 'data', type: 'string'}
-    });
-
-    Game.move = function(address, row, col, cb) {
-      this.find(null, (err,data) => {
-        let game = data[0]
-        let obj = {}
-        obj.address = address
-        obj.row = row
-        obj.col = col
-        game.tx_log.push(obj)
-        this.upsert(game, (err, data) => {
-            cb(null, data)
-        })
-      })
+    if (Game.checkin[0] == playerAddr) {
+      return cb('this player has already joined');
     }
 
-    Game.remoteMethod('move', {
-        accepts: [
-            {arg: 'address', type: 'string'},
-            {arg: 'row', type:'string'},
-            {adr: 'col', type:'string'}
-        ],
-        returns: {arg: 'data', type: 'string'}
+    Game.checkin.push(playerAddr);
+
+    console.log('Players:', Game.checkin.join(', '));
+    Game.app.io.emit('players', Game.checkin);
+
+    if (Game.checkin.length < 2) {
+      return cb();
+    }
+
+    Game.player1 = Game.checkin[0];
+    Game.player2 = Game.checkin[1];
+
+    console.log('initiate smart contract');
+    // smart contract START
+    Game.app.models.Contract.construct({}, (err, {id}) => {
+      if (err) {
+        return cb(err);
+      }
+
+      contractInstance = new Game.app.models.Contract({id});
+      contractInstance.open({
+        player1: Game.player1,
+        player2: Game.player2,
+        source: Game.sourceHash,
+      }, (err) => {
+        if (err) {
+          return cb(err);
+        }
+
+        Game.app.io.emit('start');
+        return cb(null);
+      });
     });
+  };
+
+  Game.remoteMethod('start', {
+    accepts: {arg: 'player', type: 'string', required: true},
+  });
+
+  Game.close = function(winner, cb) {
+    Game.checkin.pop();
+    if (Game.checkin.length == 0) {
+      Game.closeContract(winner, cb);
+    } else {
+      cb();
+    }
+  };
+
+  Game.remoteMethod('close', {
+    accepts: {arg: 'winner', type: 'string', required: true},
+  });
+
+  Game.closeContract = function(winner, cb) {
+    console.log('close smart contract');
+    contractInstance.close({winner: winner}, err => {
+      if (err) {
+        return cb(err);
+      }
+      return cb();
+    });
+  };
 };

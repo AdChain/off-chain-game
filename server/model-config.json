@@ -13,8 +13,16 @@
       "./mixins"
     ]
   },
-  "game": {
+  "Transaction": {
     "dataSource": "mem",
+    "public": true
+  },
+  "Game": {
+    "dataSource": null,
+    "public": true
+  },
+  "Contract": {
+    "dataSource": "ethereum",
     "public": true
   }
 }
