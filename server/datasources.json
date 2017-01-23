@@ -5,6 +5,7 @@
   },
   "ethereum": {
     "name": "ethereum",
-    "connector": "web3"
+    "connector": "web3",
+    "url": "http://localhost:8545"
   }
 }
