@@ -7,6 +7,7 @@
 
     <div id="startGameContainer">
       <h5>Start Game</h5>
+      <label><input type="checkbox" id="singlemode"> single player mode</label>
       <div class="row">
         <div class="column">
           <label>Player 1</label>
@@ -186,9 +187,13 @@
 
       window.addEventListener('load', function() {
         if (typeof web3 !== 'undefined') {
-          // web3 = new Web3(web3.currentProvider);
-          address = web3.eth.accounts[0]
           el('#startGame').addEventListener('click', () => {
+            var singlePlayerMode = el('#singlemode').checked;
+            var appendedStr = "";
+            if (singlePlayerMode) {
+              appendedStr = "_"+Math.floor(Math.random()*1000);
+            }
+            address = web3.eth.accounts[0]+appendedStr;
             joinGame(address)
             el('#startGame').disabled = true;
           })
@@ -196,7 +201,6 @@
           el('#randomTx').addEventListener('click', () => {
             let turnNumber = gameInstance.turn();
             if (address == gameInstance.addressOf(turnNumber)) {
-              //socket.emit('tx', Math.random());
               tx_log.push(Math.random())
               let obj = {
                 player:address,
