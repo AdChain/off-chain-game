@@ -16,7 +16,6 @@
       "sol": "server/Verify.sol",
       "name":"Verify"
     },
-    "gas": 3000000,
-    "url": "http://localhost:8545"
+    "gas": 3000000
   }
 }
