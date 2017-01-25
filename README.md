@@ -15,5 +15,7 @@ This application utilizes [Metamask](www.metamask.io) to obtain wallet addresses
 1. `git clone git@github.com:AdChain/tictactoe-loopback.git`
 2. `npm install`
 3. `npm start`
-4. open two browser windows to [http://localhost:3000](http://localhost:3000)
-5. play with yourself :stuck_out_tongue:
+4. sign into Metamask to make sure your Ethereum address is exposed
+5. open two browser windows to [http://localhost:3000](http://localhost:3000)
+6. check the option to play single player and begin game as player 1
+7. play with yourself :stuck_out_tongue:
