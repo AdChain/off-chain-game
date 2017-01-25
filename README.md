@@ -5,7 +5,7 @@
 
 # Getting started
 
-This application utilizes [Metamask](www.metamask.io) to obtain wallet addresses, the [LoopBack framework](http://loopback.io/) for API management and can be easily deployed on [LunchBadger](https://www.lunchbadger.com/). 
+This application utilizes [Metamask](www.metamask.io) to obtain wallet addresses, the [LoopBack framework](http://loopback.io/) for API management and can be easily deployed using [LunchBadger](https://www.lunchbadger.com/). 
 
 ## Pre-requisites
 * [Install the Metamask Chrome plugin](https://metamask.io/)
