@@ -29,7 +29,7 @@ This application utilizes [Metamask](www.metamask.io) to obtain wallet addresses
 	- the app url
 
 	as shown below:
-	![LB Settings](LBSettings.png)
+	![LB Settings](LBsettings.png)
 4. cd to tictactoe-loopback git directory
 5. `git remote add lunchbadger <YOUR GIT URL>`
 6. `git push lunchbadger master:master`
