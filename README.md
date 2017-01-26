@@ -36,4 +36,4 @@ This application utilizes [Metamask](www.metamask.io) to obtain wallet addresses
 7. confirm notification dialogue appears on the LunchBadger canvas to reload
 8. verify Canvas has rendered the tic-tac-toe microservices
 9. click the Disk save button on LunchBadger to sync all metadata in the Canvas
-10. run tictactoe remotely - using <YOUR APP URL>
+10. run tictactoe remotely - using [_YOUR APP URL_]
