@@ -28,6 +28,7 @@ This application utilizes [Metamask](www.metamask.io) to obtain wallet addresses
 	- the git url
 	- the app url
 
+
 	as shown below:
 	![LB Settings](LBsettings.png)
 4. cd to tictactoe-loopback git directory
