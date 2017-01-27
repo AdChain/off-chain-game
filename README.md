@@ -24,16 +24,16 @@ This application utilizes [Metamask](www.metamask.io) to obtain wallet addresses
 ## Running on cloud (LunchBadger)
 1. sign into [LunchBadger](https://www.lunchbadger.com/login)
 2. open another browser window or tab and go to [https://app.lunchbadger.com](https://app.lunchbadger.com)
-3. click the cog icon to access settings and note:
+3. click the Cog icon to access settings and note:
 	- the git url
 	- the app url
 
 	as shown below:
 	![LB Settings](LBsettings.png)
 4. cd to tictactoe-loopback git directory
-5. `git remote add lunchbadger <YOUR GIT URL>`
+5. `git remote add lunchbadger [_YOUR GIT URL_]`
 6. `git push lunchbadger master:master`
 7. confirm notification dialogue appears on the LunchBadger canvas to reload
 8. verify Canvas has rendered the tic-tac-toe microservices
-9. click the Disk save button on LunchBadger to sync all metadata in the Canvas
+9. click the Disk save icon on LunchBadger to sync all metadata in the Canvas
 10. run tictactoe remotely - using [_YOUR APP URL_]
