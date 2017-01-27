@@ -3,7 +3,7 @@
 
 [... based on Nick Dodson's ethjs implementation](https://github.com/ethjs/examples/blob/master/tictactoe.html)
 
-# Getting started - Local
+# Getting started
 
 This application utilizes [Metamask](www.metamask.io) to obtain wallet addresses, the [LoopBack framework](http://loopback.io/) for API composition and can be easily orchestrated and deployed using [LunchBadger](https://www.lunchbadger.com/). 
 
